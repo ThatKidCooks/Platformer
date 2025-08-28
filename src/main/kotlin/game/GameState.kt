@@ -5,6 +5,10 @@ import site.thatkid.game.KeyListener
 import site.thatkid.level.Level
 import site.thatkid.level.levels.Level1
 import site.thatkid.sprites.Entity
+import site.thatkid.sprites.SpriteTypes
+import kotlin.collections.get
+import kotlin.collections.remove
+import kotlin.text.set
 
 
 class GameState(private val keyListener: KeyListener, private val screen: Screen) {
@@ -18,6 +22,8 @@ class GameState(private val keyListener: KeyListener, private val screen: Screen
     // sprite positions mapped by entity and their (x,y) coordinates
     val blocks: MutableMap<Entity, MutableMap<Int, Int>> = mutableMapOf()
     val entities: MutableMap<Entity, MutableMap<Int, Int>> = mutableMapOf()
+
+    private var playerPos: MutableMap<Int, Int> = mutableMapOf()
 
     private val gravity = currentLevel.gravity // Gravity constant
     private val groundFriction = currentLevel.groundFriction // Ground friction (multiplier)
@@ -48,9 +54,20 @@ class GameState(private val keyListener: KeyListener, private val screen: Screen
             // Use default position if not specified in level
             entities[level.player] = mutableMapOf(0 to 50, 1 to 50) // x=50, y=50
         }
+
+        playerPos.clear()
+
+        // Reset player velocity
+        level.playerVelocity[0] = 0
+        level.playerVelocity[1] = 0
     }
 
     fun handleInput(action: String, add: Boolean) {
+        if (action == "ESCAPE" && add) {
+            println("Escape pressed - resetting level")
+            loadLevel(currentLevel)
+            return
+        }
         if (add) {
             pressedKeys.add(action)
         } else {
@@ -79,27 +96,23 @@ class GameState(private val keyListener: KeyListener, private val screen: Screen
     }
 
     private fun playerUpdate() {
-        val playerPos = entities[currentLevel.player]
+        playerPos = entities[currentLevel.player]!!
         val playerVelocity = currentLevel.playerVelocity
 
         if (playerPos != null) {
-            // Check if player is on ground (for now, just check if at bottom or on a block)
             val isOnGround = isPlayerOnGround(playerPos, playerVelocity)
 
             addPlayerVelocity(playerVelocity, isOnGround)
             applyGravityAndFriction(playerVelocity, isOnGround)
 
-            // Apply velocity to position (THIS WAS THE MAIN BUG - was setting position = velocity)
             val newX = (playerPos[0] ?: 0) + (playerVelocity[0] ?: 0)
             val newY = (playerPos[1] ?: 0) + (playerVelocity[1] ?: 0)
 
-            // Check collision with blocks before updating position
             val (finalX, finalY) = checkCollisions(newX, newY, playerVelocity)
             
             playerPos[0] = finalX
             playerPos[1] = finalY
 
-            // Keep player within bounds and stop movement at edges
             if ((playerPos[0] ?: 0) <= 0) {
                 playerPos[0] = 0
                 playerVelocity[0] = 0
@@ -115,6 +128,11 @@ class GameState(private val keyListener: KeyListener, private val screen: Screen
                 playerPos[1] = screen.getMaxSize().height - currentLevel.player.height
                 playerVelocity[1] = 0
             }
+        }
+
+        if (death()) {
+            println("Player has died - resetting level")
+            loadLevel(currentLevel)
         }
     }
 
@@ -218,6 +236,44 @@ class GameState(private val keyListener: KeyListener, private val screen: Screen
         return Pair(finalX, finalY)
     }
 
+    private fun death(): Boolean {
+        if (playerPos[0] == null || playerPos[1] == null) {
+            return false
+        }
+
+        val playerX = playerPos[0] ?: 0
+        val playerY = playerPos[1] ?: 0
+        val playerWidth = currentLevel.player.width
+        val playerHeight = currentLevel.player.height
+
+        // Check if player has fallen below the screen
+        if ((playerPos[1] ?: 0) > screen.getMaxSize().height) {
+            return true
+        }
+
+        if (playerPos[0]!! < 0 || playerPos[0]!! > screen.getMaxSize().width) {
+            return true
+        }
+
+        // is touching spike?
+        for ((block, blockPos) in entities) {
+            if (block.type == SpriteTypes.SPIKE) {
+                val blockX = blockPos[0] ?: 0
+                val blockY = blockPos[1] ?: 0
+                val blockWidth = block.width
+                val blockHeight = block.height
+
+                if (playerX < blockX + blockWidth &&
+                    playerX + playerWidth > blockX &&
+                    playerY < blockY + blockHeight &&
+                    playerY + playerHeight > blockY) {
+                    return true
+                }
+            }
+        }
+        return false
+    }
+
     // Get current level
-    fun getCurrentLevel(): Level = currentLevel
+    fun getCurrentLevel() = currentLevel
 }

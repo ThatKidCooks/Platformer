@@ -37,6 +37,10 @@ class KeyListener() : KeyListener {
             KeyEvent.VK_SPACE -> {
                 gameState.handleInput("UP", true)
             }
+
+            KeyEvent.VK_ESCAPE -> {
+                gameState.handleInput("ESCAPE", true)
+            }
         }
     }
 
@@ -64,6 +68,10 @@ class KeyListener() : KeyListener {
             }
             KeyEvent.VK_SPACE -> {
                 gameState.handleInput("UP", false)
+            }
+
+            KeyEvent.VK_ESCAPE -> {
+                gameState.handleInput("ESCAPE", false)
             }
         }
     }

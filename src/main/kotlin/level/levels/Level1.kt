@@ -3,6 +3,7 @@ package site.thatkid.level.levels
 import site.thatkid.level.Level
 import site.thatkid.sprites.Entity
 import site.thatkid.sprites.blocks.Block
+import site.thatkid.sprites.blocks.Spike
 import site.thatkid.sprites.player.Player
 
 object Level1 : Level() {
@@ -25,6 +26,8 @@ object Level1 : Level() {
     private val groundBlock1 = Block(300, 40, "ground1")
     private val groundBlock2 = Block(500, 40, "ground2")
 
+    private val spike = Spike(2000, 20 , "spike1")
+
     init {
         // Initialize level with player position (start on a platform)
         entities[Player] = mutableMapOf(0 to 50, 1 to 50) // x=50, y=50
@@ -38,6 +41,9 @@ object Level1 : Level() {
         entities[platform2] = mutableMapOf(0 to 450, 1 to 350) // x=450, y=350
         entities[platform3] = mutableMapOf(0 to 300, 1 to 250) // x=300, y=250
         entities[platform4] = mutableMapOf(0 to 600, 1 to 150) // x=450, y=250
+
+        // Add a spike obstacle
+        entities[spike] = mutableMapOf(0 to 0, 1 to 1035) // x=0, y=1035 (on the ground)
     }
 
     override val gravity = 1 // Gravity constant
