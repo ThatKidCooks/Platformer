@@ -19,8 +19,10 @@ class GameState(private val keyListener: KeyListener, private val screen: Screen
     val blocks: MutableMap<Entity, MutableMap<Int, Int>> = mutableMapOf()
     val entities: MutableMap<Entity, MutableMap<Int, Int>> = mutableMapOf()
 
-    private val gravity = 2 // Gravity constant
-    private val friction = 1 // Friction constant
+    private val gravity = 1 // Gravity constant
+    private val groundFriction = 0.8 // Ground friction (multiplier)
+    private val airDrag = 0.95 // Air drag (multiplier)
+    private val jumpVelocity = -15 // Jump velocity (negative is up)
 
     init {
         loadLevel(currentLevel)
@@ -32,12 +34,18 @@ class GameState(private val keyListener: KeyListener, private val screen: Screen
         entities.clear()
         blocks.clear()
 
-        // Load entities from level
-        entities.putAll(level.entities)
+        // Load entities from level and separate blocks from other entities
+        level.entities.forEach { (entity, position) ->
+            if (entity.type == site.thatkid.sprites.SpriteTypes.BLOCK) {
+                blocks[entity] = position
+            } else {
+                entities[entity] = position
+            }
+        }
 
         // Add player to entities if not already there
         if (!entities.contains(level.player)) {
-            entities[level.player] = mutableMapOf(0 to 100, 0 to 150) // x=100, y=150
+            entities[level.player] = mutableMapOf(0 to 50, 1 to 100) // x=50, y=100
         }
     }
 
@@ -54,12 +62,19 @@ class GameState(private val keyListener: KeyListener, private val screen: Screen
         playerUpdate()
     }
 
-    private fun applyGravityAndFriction(playerVelocity: MutableMap<Int, Int>) {
+    private fun applyGravityAndFriction(playerVelocity: MutableMap<Int, Int>, isOnGround: Boolean) {
         // Apply gravity to the vertical velocity
         playerVelocity[1] = (playerVelocity[1] ?: 0) + gravity
 
-        // Apply friction to the horizontal velocity
-        playerVelocity[0] = ((playerVelocity[0] ?: 0) / friction)
+        // Apply friction or air drag to horizontal velocity based on ground contact
+        val currentX = playerVelocity[0] ?: 0
+        playerVelocity[0] = if (isOnGround) {
+            // Apply ground friction
+            (currentX * groundFriction).toInt()
+        } else {
+            // Apply air drag
+            (currentX * airDrag).toInt()
+        }
     }
 
     private fun playerUpdate() {
@@ -67,12 +82,21 @@ class GameState(private val keyListener: KeyListener, private val screen: Screen
         val playerVelocity = currentLevel.playerVelocity
 
         if (playerPos != null) {
+            // Check if player is on ground (for now, just check if at bottom or on a block)
+            val isOnGround = isPlayerOnGround(playerPos, playerVelocity)
 
-            addPlayerVelocity(playerVelocity)
-            applyGravityAndFriction(playerVelocity)
+            addPlayerVelocity(playerVelocity, isOnGround)
+            applyGravityAndFriction(playerVelocity, isOnGround)
 
-            playerPos[0] = playerVelocity[0]!!
-            playerPos[1] = playerVelocity[1]!!
+            // Apply velocity to position (THIS WAS THE MAIN BUG - was setting position = velocity)
+            val newX = (playerPos[0] ?: 0) + (playerVelocity[0] ?: 0)
+            val newY = (playerPos[1] ?: 0) + (playerVelocity[1] ?: 0)
+
+            // Check collision with blocks before updating position
+            val (finalX, finalY) = checkCollisions(newX, newY, playerVelocity)
+            
+            playerPos[0] = finalX
+            playerPos[1] = finalY
 
             // Keep player within bounds and stop movement at edges
             if ((playerPos[0] ?: 0) <= 0) {
@@ -93,26 +117,104 @@ class GameState(private val keyListener: KeyListener, private val screen: Screen
         }
     }
 
-    private fun addPlayerVelocity(playerVelocity: MutableMap<Int, Int>): MutableMap<Int, Int> {
+    private fun addPlayerVelocity(playerVelocity: MutableMap<Int, Int>, isOnGround: Boolean): MutableMap<Int, Int> {
+        val currentX = playerVelocity[0] ?: 0
+        val currentY = playerVelocity[1] ?: 0
 
-        var currentX = playerVelocity[0] ?: 0
-        var currentY = playerVelocity[1] ?: 0
+        var newX = currentX
+        var newY = currentY
 
-        // Move based on pressed keys
+        // Horizontal movement
         if (pressedKeys.contains("LEFT")) {
-            currentX -= moveSpeed
+            newX -= moveSpeed
         }
         if (pressedKeys.contains("RIGHT")) {
-            currentX += moveSpeed
+            newX += moveSpeed
         }
-        if (pressedKeys.contains("UP")) {
-            currentY -= moveSpeed * 2
+        
+        // Jumping - only when on ground
+        if (pressedKeys.contains("UP") && isOnGround) {
+            newY = jumpVelocity
         }
 
-        playerVelocity[0] = currentX
-        playerVelocity[1] = currentY
+        playerVelocity[0] = newX
+        playerVelocity[1] = newY
 
         return playerVelocity
+    }
+
+    private fun isPlayerOnGround(playerPos: MutableMap<Int, Int>, playerVelocity: MutableMap<Int, Int>): Boolean {
+        val playerX = playerPos[0] ?: 0
+        val playerY = playerPos[1] ?: 0
+        val playerWidth = currentLevel.player.width
+        val playerHeight = currentLevel.player.height
+
+        // Check if at bottom of screen (ground level)
+        if (playerY >= screen.getMaxSize().height - playerHeight) {
+            return true
+        }
+
+        // Check if standing on any block
+        for ((block, blockPos) in blocks) {
+            val blockX = blockPos[0] ?: 0
+            val blockY = blockPos[1] ?: 0
+            
+            // Check if player is on top of this block
+            if (playerY + playerHeight <= blockY && 
+                playerY + playerHeight + Math.abs(playerVelocity[1] ?: 0) + 1 >= blockY &&
+                playerX + playerWidth > blockX && 
+                playerX < blockX + block.width) {
+                return true
+            }
+        }
+        
+        return false
+    }
+
+    private fun checkCollisions(newX: Int, newY: Int, playerVelocity: MutableMap<Int, Int>): Pair<Int, Int> {
+        val playerWidth = currentLevel.player.width
+        val playerHeight = currentLevel.player.height
+        
+        var finalX = newX
+        var finalY = newY
+        
+        // Check collision with blocks
+        for ((block, blockPos) in blocks) {
+            val blockX = blockPos[0] ?: 0
+            val blockY = blockPos[1] ?: 0
+            
+            // Check if would collide
+            if (finalX + playerWidth > blockX && 
+                finalX < blockX + block.width &&
+                finalY + playerHeight > blockY && 
+                finalY < blockY + block.height) {
+                
+                // Determine collision side and resolve
+                val overlapX = Math.min(finalX + playerWidth - blockX, blockX + block.width - finalX)
+                val overlapY = Math.min(finalY + playerHeight - blockY, blockY + block.height - finalY)
+                
+                if (overlapX < overlapY) {
+                    // Horizontal collision
+                    if (finalX < blockX) {
+                        finalX = blockX - playerWidth
+                    } else {
+                        finalX = blockX + block.width
+                    }
+                    playerVelocity[0] = 0
+                } else {
+                    // Vertical collision
+                    if (finalY < blockY) {
+                        finalY = blockY - playerHeight
+                        playerVelocity[1] = 0 // Stop falling when hitting ground
+                    } else {
+                        finalY = blockY + block.height
+                        playerVelocity[1] = 0
+                    }
+                }
+            }
+        }
+        
+        return Pair(finalX, finalY)
     }
 
     // Get current level
