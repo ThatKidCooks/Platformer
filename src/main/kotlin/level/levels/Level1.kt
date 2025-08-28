@@ -25,16 +25,16 @@ object Level1 : Level() {
     private val groundBlock2 = Block(300, 40, "ground2")
 
     init {
-        // Initialize level with player position (start higher up)
-        entities[Player] = mutableMapOf(0 to 50, 1 to 100) // x=50, y=100
+        // Initialize level with player position (start on a platform)
+        entities[Player] = mutableMapOf(0 to 50, 1 to 50) // x=50, y=50
 
-        // Add ground platforms
-        entities[groundBlock1] = mutableMapOf(0 to 100, 1 to 500) // x=100, y=500
-        entities[groundBlock2] = mutableMapOf(0 to 450, 1 to 500) // x=450, y=500
+        // Add ground platforms at reasonable screen positions
+        entities[groundBlock1] = mutableMapOf(0 to 0, 1 to 550) // x=0, y=550 (bottom left)
+        entities[groundBlock2] = mutableMapOf(0 to 400, 1 to 550) // x=400, y=550 (bottom right)
         
-        // Add floating platforms
-        entities[platform1] = mutableMapOf(0 to 200, 1 to 400) // x=200, y=400
-        entities[platform2] = mutableMapOf(0 to 500, 1 to 300) // x=500, y=300
-        entities[platform3] = mutableMapOf(0 to 350, 1 to 200) // x=350, y=200
+        // Add floating platforms for jumping
+        entities[platform1] = mutableMapOf(0 to 150, 1 to 450) // x=150, y=450
+        entities[platform2] = mutableMapOf(0 to 450, 1 to 350) // x=450, y=350
+        entities[platform3] = mutableMapOf(0 to 300, 1 to 250) // x=300, y=250
     }
 }
