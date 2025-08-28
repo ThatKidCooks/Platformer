@@ -1,5 +1,8 @@
 package site.thatkid
 
 fun main() {
-    Screen()
+
+    val screen = Screen()
+
+    screen
 }
