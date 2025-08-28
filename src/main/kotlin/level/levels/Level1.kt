@@ -21,6 +21,7 @@ object Level1 : Level() {
     private val platform1 = Block(200, 40, "platform1")
     private val platform2 = Block(150, 40, "platform2") 
     private val platform3 = Block(100, 40, "platform3")
+    private val platform4 = Block(200, 40, "platform4")
     private val groundBlock1 = Block(300, 40, "ground1")
     private val groundBlock2 = Block(300, 40, "ground2")
 
@@ -37,4 +38,9 @@ object Level1 : Level() {
         entities[platform2] = mutableMapOf(0 to 450, 1 to 350) // x=450, y=350
         entities[platform3] = mutableMapOf(0 to 300, 1 to 250) // x=300, y=250
     }
+
+    override val gravity = 1 // Gravity constant
+    override val groundFriction = 0.85 // Ground friction (multiplier)
+    override val airDrag = 0.7 // Air drag (multiplier)
+    override val jumpVelocity = -18 // Jump velocity (negative is up)
 }

@@ -13,16 +13,16 @@ class GameState(private val keyListener: KeyListener, private val screen: Screen
     private val currentLevel: Level = Level1
     private val pressedKeys = mutableSetOf<String>()
 
-    private val moveSpeed = 5
+    private val moveSpeed = 4
 
-    // You can have multiple sprites
+    // sprite positions mapped by entity and their (x,y) coordinates
     val blocks: MutableMap<Entity, MutableMap<Int, Int>> = mutableMapOf()
     val entities: MutableMap<Entity, MutableMap<Int, Int>> = mutableMapOf()
 
-    private val gravity = 1 // Gravity constant
-    private val groundFriction = 0.75 // Ground friction (multiplier)
-    private val airDrag = 0.98 // Air drag (multiplier) 
-    private val jumpVelocity = -18 // Jump velocity (negative is up)
+    private val gravity = currentLevel.gravity // Gravity constant
+    private val groundFriction = currentLevel.groundFriction // Ground friction (multiplier)
+    private val airDrag = currentLevel.airDrag // Air drag (multiplier)
+    private val jumpVelocity = currentLevel.jumpVelocity // Jump velocity (negative is up)
 
     init {
         loadLevel(currentLevel)
@@ -71,7 +71,7 @@ class GameState(private val keyListener: KeyListener, private val screen: Screen
         val currentX = playerVelocity[0] ?: 0
         playerVelocity[0] = if (isOnGround) {
             // Apply ground friction
-            (currentX * groundFriction).toInt()
+            (currentX * groundFriction * airDrag).toInt()
         } else {
             // Apply air drag
             (currentX * airDrag).toInt()
