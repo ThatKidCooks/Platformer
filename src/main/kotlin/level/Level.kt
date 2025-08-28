@@ -11,4 +11,9 @@ abstract class Level {
 
     abstract val player: Entity
     open val playerVelocity: MutableMap<Int, Int> = mutableMapOf(0 to 0, 1 to 0)
+
+    abstract val gravity: Int
+    abstract val groundFriction: Double
+    abstract val airDrag: Double
+    abstract val jumpVelocity: Int
 }

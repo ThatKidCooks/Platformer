@@ -9,18 +9,14 @@ object Player : Entity() {
     override val id: String
         get() = "player"
 
-
     override val width: Int
         get() = 30
     override val height: Int
         get() = 30
-
 
     override val type: SpriteTypes
         get() = SpriteTypes.PLAYER
 
     override val gravity: Boolean
         get() = true
-
-    val velocity = mutableMapOf<Int, Int>()
 }
