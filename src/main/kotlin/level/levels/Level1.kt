@@ -23,7 +23,7 @@ object Level1 : Level() {
     private val platform3 = Block(100, 40, "platform3")
     private val platform4 = Block(200, 40, "platform4")
     private val groundBlock1 = Block(300, 40, "ground1")
-    private val groundBlock2 = Block(300, 40, "ground2")
+    private val groundBlock2 = Block(500, 40, "ground2")
 
     init {
         // Initialize level with player position (start on a platform)
@@ -37,6 +37,7 @@ object Level1 : Level() {
         entities[platform1] = mutableMapOf(0 to 150, 1 to 450) // x=150, y=450
         entities[platform2] = mutableMapOf(0 to 450, 1 to 350) // x=450, y=350
         entities[platform3] = mutableMapOf(0 to 300, 1 to 250) // x=300, y=250
+        entities[platform4] = mutableMapOf(0 to 600, 1 to 150) // x=450, y=250
     }
 
     override val gravity = 1 // Gravity constant
