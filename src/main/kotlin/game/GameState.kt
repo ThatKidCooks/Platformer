@@ -2,19 +2,17 @@ package game
 
 import site.thatkid.Screen
 import site.thatkid.game.KeyListener
-import site.thatkid.level.Level
-import site.thatkid.level.levels.Level1
+import site.thatkid.screens.ScreenManager
+import site.thatkid.screens.level.Level
+import site.thatkid.screens.level.levels.Level1
 import site.thatkid.sprites.Entity
 import site.thatkid.sprites.SpriteTypes
-import kotlin.collections.get
-import kotlin.collections.remove
-import kotlin.text.set
 
 
-class GameState(private val keyListener: KeyListener, private val screen: Screen) {
+class GameState(private val keyListener: KeyListener, private val screen: Screen, private val screenManager: ScreenManager) {
 
     // Current level being played
-    private val currentLevel: Level = Level1
+    private val currentLevel: Level = screenManager.getCurrentLevel()
     private val pressedKeys = mutableSetOf<String>()
 
     private val moveSpeed = 4
@@ -32,7 +30,6 @@ class GameState(private val keyListener: KeyListener, private val screen: Screen
 
     init {
         loadLevel(currentLevel)
-        keyListener
     }
 
     private fun loadLevel(level: Level) {
@@ -42,7 +39,7 @@ class GameState(private val keyListener: KeyListener, private val screen: Screen
 
         // Load entities from level and separate blocks from other entities
         level.entities.forEach { (entity, position) ->
-            if (entity.type == site.thatkid.sprites.SpriteTypes.BLOCK) {
+            if (entity.type == SpriteTypes.BLOCK) {
                 blocks[entity] = position
             } else {
                 entities[entity] = position

@@ -1,6 +1,6 @@
-package site.thatkid.level.levels
+package site.thatkid.screens.level.levels
 
-import site.thatkid.level.Level
+import site.thatkid.screens.level.Level
 import site.thatkid.sprites.Entity
 import site.thatkid.sprites.blocks.Block
 import site.thatkid.sprites.blocks.Spike

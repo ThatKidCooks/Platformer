@@ -3,17 +3,20 @@ package site.thatkid
 import game.GameState
 import site.thatkid.game.GamePanel
 import site.thatkid.game.KeyListener
+import site.thatkid.screens.ScreenManager
 import java.awt.Dimension
 import java.awt.GraphicsDevice
 import java.awt.GraphicsEnvironment
+import java.io.File
 import javax.swing.JFrame
 import javax.swing.Timer
 
 class Screen : JFrame() {
 
     private val keyListener = KeyListener()
+    private val screenManager = ScreenManager()
 
-    private val gameState = GameState(keyListener, this)
+    private val gameState = GameState(keyListener, this, screenManager)
 
     private val gamePanel = GamePanel(gameState)
 
@@ -37,6 +40,8 @@ class Screen : JFrame() {
         isFocusable = true
         requestFocusInWindow()
 
+        screenManager.load()
+
         startGameLoop()
     }
 
@@ -51,5 +56,9 @@ class Screen : JFrame() {
         }
         timer.start()
 
+    }
+
+    fun disabler() {
+        screenManager.save()
     }
 }

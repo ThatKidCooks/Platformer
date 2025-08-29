@@ -5,4 +5,5 @@ enum class SpriteTypes {
     BLOCK,
     ENEMY,
     SPIKE,
+    BUTTON,
 }
