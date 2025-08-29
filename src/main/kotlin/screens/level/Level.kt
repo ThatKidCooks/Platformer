@@ -1,9 +1,8 @@
 package site.thatkid.screens.level
 
-import site.thatkid.screens.Screen
 import site.thatkid.sprites.Entity
 
-abstract class Level : Screen() {
+abstract class Level {
 
     abstract val name: String
     abstract val level: Int
